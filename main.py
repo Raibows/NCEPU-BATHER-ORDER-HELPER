@@ -1,4 +1,4 @@
-from tools import log, check_config, read_config_file
+from tools import log, check_config, read_config_file, get_ddl
 import time
 from datetime import datetime
 from api import Api, OrderBather
@@ -16,9 +16,9 @@ def main(x:int):
             suffix = '不可预约' if (one['choise'] == '0' or one['msg'] == 0) else '可预约'
             print(f'编号：{i}', config['day'], one['timeslot'], f"剩余{one['msg']}", suffix)
     elif x == 1:
-        if config['ddl'] == None: ddl = max(config['time'])
-        else: ddl = config['ddl']
-        bather.start_order(datetime.now().replace(hour=int(ddl[:2]), minute=int(ddl[3:])))
+        ddl = get_ddl(config['day'], config['ddl'], config['time'])
+        config['ddl'] = ddl
+        bather.start_order(ddl)
     elif x == 2:
         ordered_number, ordered_time = api.ordered_bath_list()
         if len(ordered_number) == 0:
@@ -64,6 +64,7 @@ if __name__ == '__main__':
                 api.logout()
                 break
             main(x)
-        except:
+        except Exception as e:
+            print(e)
             api.logout()
 

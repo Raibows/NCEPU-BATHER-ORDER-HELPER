@@ -11,7 +11,25 @@ class Api():
         self.password = config['password']
         self.expected_day = config['day']
         self.expected_time = config['time']
+        self.set_sex_args(config['sex'])
         self.session = self.login()
+
+    def set_sex_args(self, sex:str):
+        if sex == 'male':
+            self.goodsid = '14'
+            self.sex = '1'
+            self.bathroomid = '14'
+            self.bathroomname = '二校男浴室',
+            self.goodslogo = "http://59.67.246.90:8088/photo/0001/f7f4b326beff45a6a848a8b1c9b53b68.png"
+        elif sex == 'female':
+            self.goodsid = '16'
+            self.sex = '0'
+            self.bathroomid = '16'
+            self.bathroomname = '二校女浴室'
+            self.goodslogo = "http://59.67.246.90:8088/photo/0001/2b86aeca7bae4906bf5906f91f4d216f.png"
+
+
+
 
     def login(self)->requests.Session:
         url = "http://bdhq.ncepu.edu.cn/ncepucenter/weixinlogin.json"
@@ -53,10 +71,11 @@ class Api():
         _ = self.order_homepage()
         url = "http://yushiyuyue.ncepu.edu.cn/appointRules/queryAppointRules"
         data = {
-            'goodsid': 14,
+            'goodsid': self.goodsid,
             'appointdate': self.expected_day
         }
         res = self.session.post(url, data=data, headers=get_fake_headers())
+        # print(res.text)
         res = res.json()
         if res['returncode'] == 'SUCCESS':
             log('get order_list successfully')
@@ -94,17 +113,13 @@ class Api():
 
     def order_bath(self, rulesid):
         _ = self.available_order_list()
-        bathroomid = '14'
-        sex = '1'
-        goodslogo = "http://59.67.246.90:8088/photo/0001/f7f4b326beff45a6a848a8b1c9b53b68.png"
-        bathroomname = '二校男浴室'
         data = {
-            'bathroomid': bathroomid,
+            'bathroomid': self.bathroomid,
             'appointdate': self.expected_day,
             'rulesid': rulesid,
-            'sex': sex,
-            'goodslogo': goodslogo,
-            'bathroomname': bathroomname,
+            'sex': self.sex,
+            'goodslogo': self.goodslogo,
+            'bathroomname': self.bathroomname,
         }
         order_url = "http://yushiyuyue.ncepu.edu.cn/appointmentGoods"
         res = self.session.post(order_url, data=data, headers=get_fake_headers())
@@ -188,9 +203,7 @@ class OrderBather():
 
     def flush_available_order_list(self):
         self.available_order_list:list = self.api.available_order_list()
-        now = datetime.now()
-        now = timedelta(hours=now.hour, minutes=now.minute+21)
-        self.available_order_list = list(filter(lambda x: x['msg'] > 0 and x['end'] >= now and x['choise'] != '0',
+        self.available_order_list = list(filter(lambda x: x['msg'] > 0  and x['choise'] != '0',
                                            self.available_order_list))
         if len(self.available_order_list) == 0:
             log('there is no available time interval for you to have a bash!')
@@ -221,10 +234,10 @@ class OrderBather():
                         self.ready_bath = None
         if self.ready_bath:
             log(f"have orderd bath {self.api.expected_day} {self.ready_bath['timeslot']}")
-            weixin_push(f"{get_time()} 已帮您成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']}")
+            weixin_push(f"{get_time()} 账号 {self.api.account} 成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']}")
         else:
             log(f"sorry have not ordered any time {self.api.expected_day} {self.api.expected_time}")
-            weixin_push(f"{get_time()} 预约失败，脚本已自动结束，未能帮您在 {self.api.expected_day} {self.api.expected_time} 成功预约")
+            weixin_push(f"{get_time()} 账号 {self.api.account} 预约失败，脚本已自动结束，未能帮您在 {self.api.expected_day} {self.api.expected_time} 成功预约")
             self.api.logout()
             exit(0)
 

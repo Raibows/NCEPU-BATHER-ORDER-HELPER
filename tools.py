@@ -39,8 +39,15 @@ def regex_datetime_format(val:str):
         raise TypeError
     pat = re.compile(r"^\d{4}-\d{2}-\d{2}$")
     if not pat.match(val):
-        raise argparse.ArgumentTypeError
-    return val
+        try:
+            val = int(val)
+            assert val < 3
+        except:
+            raise argparse.ArgumentTypeError
+    else:
+        return val
+    val = datetime.now() + timedelta(days=val)
+    return val.strftime("%Y-%m-%d")
 
 def read_config_file(path=r'./config.json'):
     if not os.path.exists(path):
@@ -54,7 +61,9 @@ def read_config_file(path=r'./config.json'):
                     "18:03",
                     "越在上面优先级越高"
                 ],
-            "ddl": '脚本强制结束时间，也就是最晚期望得到结果的时间，无论抢没抢到，例如22:10'
+            "ddl": '脚本强制结束时间，也就是最晚期望得到结果的时间，无论抢没抢到，例如22:10，则在今天22:10结束；默认为null，则在'
+                   '您设定的日期，time列表最后一个期望时间，提前1小时结束',
+            "sex": '请选择（male，female）之一'
         }
         with open(path, 'w', encoding='utf-8') as file:
             json.dump(config, file, ensure_ascii=False, indent=4, sort_keys=True)
@@ -62,6 +71,14 @@ def read_config_file(path=r'./config.json'):
             exit(0)
     with open(path, 'r', encoding='utf-8') as file:
         return json.load(file)
+
+def get_ddl(expected_day, ddl, time:list)->datetime:
+    time = max(time)
+    order_last = datetime(year=int(expected_day[:4]), month=int(expected_day[5:7]),
+             day=int(expected_day[8:]), hour=int(time[:2]), minute=int(time[3:]))
+    if ddl == None:
+        return order_last - timedelta(hours=1)
+    return datetime.now().replace(hour=int(ddl[:2]), minute=int(ddl[:2]))
 
 
 if __name__ == '__main__':
