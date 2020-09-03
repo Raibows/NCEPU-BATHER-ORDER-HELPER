@@ -176,6 +176,7 @@ class Api():
                 log(f'cancel orderno {ordered_number[i]}  {ordered_time[i]} successfully')
 
 def weixin_push(content):
+    return None
     url = "https://chizuo.top/api/push_msg_to_wx"
     account_id = '990731'
     account_password = 'chizuo'
