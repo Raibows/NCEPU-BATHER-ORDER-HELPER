@@ -25,7 +25,7 @@
 
 ### 部署型使用
 
-1. 请先使用python main.py``，生成``config.json``文件，作为本项目的配置文件
+1. 请先使用``python main.py``，生成``config.json``文件，作为本项目的配置文件
 
 2. 完善``config.json``文件中的``account``、``password``、``sex``字段即可
 
