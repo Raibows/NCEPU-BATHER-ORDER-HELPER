@@ -2,7 +2,8 @@ from tools import log, check_config, read_config_file, get_ddl
 import time
 from datetime import datetime
 from api import Api, OrderBather
-
+import re
+import os
 
 config = read_config_file()
 api = Api(config)
@@ -11,6 +12,12 @@ bather = OrderBather(api)
 
 def main(x:int):
     if x == 0:
+        pat = re.compile("^\d{2}-\d{2}$")
+        temp = input("请输入您想要查询的日期，例如09-08，9月8号，年份不用写\n")
+        while not pat.match(temp):
+            temp = input("请输入您想要查询的日期，例如09-08，9月8号，年份不用写\n")
+        config['day'] = f"{datetime.now().strftime('%Y')}-{temp}"
+        api.set_basic_args(config)
         order_list = api.available_order_list()
         for i, one in enumerate(order_list):
             suffix = '不可预约' if (one['choise'] == '0' or one['msg'] == 0) else '可预约'
@@ -31,12 +38,13 @@ def main(x:int):
         api.cancel_order(cancel_set=None)
 
 
-def show_tip():
-    time.sleep(1.2)
+def show_tip(flag:bool):
+    if flag: temp = input("请按任意键继续\n")
+    os.system('cls')
     tip = "\n\n请输入编号，进行功能选择，请务必确保config.py文件中的配置正确！"
     print(tip)
     choices = [
-        f"查看{config['day']}可预约的洗澡时间段",
+        f"查询某一日期可预约的洗澡时间段",
         f"按照配置{config['day']} {config['time']}进行预约洗澡",
         '查看已经预约的列表',
         '取消预约',
@@ -57,13 +65,15 @@ def show_tip():
 
 
 if __name__ == '__main__':
+    flag = False
     while True:
         try:
-            x = show_tip()
+            x = show_tip(flag)
             if x == 4:
                 api.logout()
                 break
             main(x)
+            flag = True
         except Exception as e:
             print(e)
             api.logout()

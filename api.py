@@ -7,12 +7,15 @@ import time
 
 class Api():
     def __init__(self, config=read_config_file()):
+        self.set_basic_args(config)
+        self.session = self.login()
+
+    def set_basic_args(self, config:dict):
         self.account = config['account']
         self.password = config['password']
         self.expected_day = config['day']
         self.expected_time = config['time']
         self.set_sex_args(config['sex'])
-        self.session = self.login()
 
     def set_sex_args(self, sex:str):
         if sex == 'male':
