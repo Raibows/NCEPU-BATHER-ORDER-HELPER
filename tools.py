@@ -63,7 +63,8 @@ def read_config_file(path=r'./config.json'):
                 ],
             "ddl": '脚本强制结束时间，也就是最晚期望得到结果的时间，无论抢没抢到，例如22:10，则在今天22:10结束；默认为null，则在'
                    '您设定的日期，time列表最后一个期望时间，提前1小时结束',
-            "sex": '请选择（male，female）之一'
+            "sex": '请选择（male，female）之一',
+            "wx_id": None
         }
         with open(path, 'w', encoding='utf-8') as file:
             json.dump(config, file, ensure_ascii=False, indent=4, sort_keys=True)
