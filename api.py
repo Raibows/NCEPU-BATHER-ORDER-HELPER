@@ -184,11 +184,11 @@ class Api():
             log(f'cancel orderno {ordered_number[i]}  {ordered_time[i]} failed')
             return False
 
-    def weixin_push(self, content):
+    def wechat_push(self, content):
         if self.wx_id == None:
             log('微信推送服务wx_id尚未配置，微信通知推送失败')
             return None
-        url = "https://chizuo.top/api/push_msg_to_wx"
+        url = "https://chizuo.top/api/wx_push_templete_to_user"
         account_id = '990731'
         account_password = 'chizuo'
         touser = self.wx_id
@@ -197,6 +197,7 @@ class Api():
             'account_password': account_password,
             'content': content,
             'touser': touser,
+            'title': '华电洗澡预约助手'
         }
         res = requests.post(url, data=data)
         log(f'微信推送 {res.status_code} {res.text}')
@@ -272,10 +273,10 @@ class OrderBather():
 
         if self.ready_bath:
             log(f"have orderd bath {self.api.expected_day} {self.ready_bath['timeslot']}")
-            self.api.weixin_push(f"{get_time()} 华电洗澡预约助手提醒您：账号 {self.api.account} 成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']}")
+            self.api.wechat_push(f"账号 {self.api.account} 成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']}")
         else:
             log(f"sorry have not ordered any time {self.api.expected_day} {self.api.expected_time}")
-            self.api.weixin_push(f"{get_time()} 华电洗澡预约助手提醒您：账号 {self.api.account} 预约失败，脚本已自动结束，未能帮您在 {self.api.expected_day} {self.api.expected_time} 成功预约")
+            self.api.wechat_push(f"账号 {self.api.account} 预约失败，脚本已自动结束，未能帮您在 {self.api.expected_day} {self.api.expected_time} 成功预约")
             self.api.logout()
             exit(0)
 
