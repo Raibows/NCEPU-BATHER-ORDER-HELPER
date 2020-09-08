@@ -1,5 +1,5 @@
 from tools import log, check_config, read_config_file, get_ddl
-import time
+import sys
 from datetime import datetime
 from api import Api, OrderBather
 import re
@@ -39,8 +39,9 @@ def main(x:int):
 
 
 def show_tip(flag:bool):
-    if flag: temp = input("请按任意键继续\n")
-    os.system('cls')
+    if flag: _ = input("请按任意键继续\n")
+    if sys.platform == 'linux': os.system('clear')
+    else: os.system('cls')
     tip = "\n\n请输入编号，进行功能选择，请务必确保config.py文件中的配置正确！"
     print(tip)
     choices = [
