@@ -46,6 +46,7 @@
 6. ``ddl``：无论是否预约到，均在ddl时刻停止程序运行。默认值：``在day日期，max(time)时刻 - 1hour``时刻停止运行；自行指定一个时刻如``22:10``将``在day日期，22:10``时刻停止运行
 7. ``wx_id``：即微信个人的openid，此项默认值为null；扫描以下二维码关注公众号或回复任意字符，即可获得个人的``wx_id``；此后预约结果将通过此微信公众号给您发送提醒
 <div align=center>
-   <img src="https://raw.githubusercontent.com/Raibows/MarkdownPhotos/master/picgoimage/20200908210607.png" alt="pic09-08-21-05-16" style="zoom: 54%;" />
+   <img src="https://raw.githubusercontent.com/Raibows/MarkdownPhotos/master/picgoimage/20200908210607.png" alt="pic09-08-21-05-16" style="zoom: 45%;" />
 </div>
+
 微信通知已经完善！您也可使用自己的通知服务，更改``api.py``文件下的``Api/wechat_push``函数即可

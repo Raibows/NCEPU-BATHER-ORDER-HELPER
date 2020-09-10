@@ -268,6 +268,9 @@ class OrderBather():
                         temp.add(f"{self.api.expected_day} {self.ready_bath['timeslot']}")
                         if not self.api.cancel_order(cancel_set=temp):
                             continue
+                        self.priority = 999
+                    if not self.api.order_bath(available[0]['id']):
+                        continue
                     self.ready_bath = available[0]
                     self.priority = pr
 
