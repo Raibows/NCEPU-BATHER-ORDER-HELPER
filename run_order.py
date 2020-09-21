@@ -13,8 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('--time', nargs='+',
                         help=f'请输入你想要预约的洗澡时间，可以输入多个形如18:03格式的时间，最前面的优先级最高')
     parser.add_argument('--ddl', default=None,
-                        help='请输入截止脚本时间，如若超出ddl形如（今天）18:03，则脚本自动停止；默认为设定的日期，'
-                             'time列表里最晚的时刻，提前1小时结束')
+                        help='请输入截止脚本时间，具体格式请参考README.md')
     args = parser.parse_args()
     expected_day = args.day
     expected_time = args.time

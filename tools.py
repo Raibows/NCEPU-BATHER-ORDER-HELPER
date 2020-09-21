@@ -75,11 +75,22 @@ def read_config_file(path=r'./config.json'):
 
 def get_ddl(expected_day, ddl, time:list)->datetime:
     time = max(time)
+    if ddl != None:
+        pat = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$")
+        if pat.match(ddl):
+            ddl = datetime.strptime(ddl, "%Y-%m-%d %H:%M")
+        else:
+            pat = re.compile(r"^\d{2}:\d{2}$")
+            if pat.match(ddl):
+                ddl = datetime.now().replace(hour=int(ddl[:2]), minute=int(ddl[3:]))
+            else:
+                log(f'wrong ddl time format {ddl}')
+                exit(-1)
     order_last = datetime(year=int(expected_day[:4]), month=int(expected_day[5:7]),
              day=int(expected_day[8:]), hour=int(time[:2]), minute=int(time[3:]))
-    if ddl == None:
+    if ddl == None or ddl > order_last:
         return order_last - timedelta(hours=1)
-    return datetime.now().replace(hour=int(ddl[:2]), minute=int(ddl[:2]))
+    return ddl
 
 
 if __name__ == '__main__':
