@@ -3,6 +3,9 @@ from tools import get_fake_headers, log, get_time, read_config_file
 from datetime import datetime, timedelta
 import re
 import time
+import random
+
+random.seed(667)
 
 
 class Api():
@@ -84,7 +87,7 @@ class Api():
         # print(res.text)
         res = res.json()
         if res['returncode'] == 'SUCCESS':
-            log('get order_list successfully')
+            # log('get order_list successfully')
             res = res['jsonArr']
             for one in res:
                 start = one['timeslot'].split('-')
@@ -249,8 +252,14 @@ class OrderBather():
         log(f"开始帮您预约洗澡直到{get_time(ddl)}, 预约日期为{self.api.expected_day}, "
             f"期望时间为{self.api.expected_time}"
             f"您可随时按Ctrl + C结束此程序")
+        if self.ready_bath:
+            log(f"发现您已经预约 {self.api.expected_day} {self.ready_bath['timeslot']}")
+        try_time = 0
         while True:
-            time.sleep(3)
+            try_time += 1
+            log(f'正在帮您尝试第 {try_time} 次  '
+                f"当前预约结果为 {self.api.expected_day} {self.ready_bath['timeslot'] if self.ready_bath else None} ")
+            time.sleep(random.uniform(1.0, 5.0))
             now = datetime.now()
             if self.priority == 0:
                 break
