@@ -76,9 +76,9 @@ def read_config_file(path=r'./config.json'):
 def get_ddl(expected_day, ddl, time:list)->datetime:
     time = max(time)
     if ddl != None:
-        pat = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$")
+        pat = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}:\d{2}$")
         if pat.match(ddl):
-            ddl = datetime.strptime(ddl, "%Y-%m-%d %H:%M")
+            ddl = datetime.strptime(ddl, "%Y-%m-%d-%H:%M")
         else:
             pat = re.compile(r"^\d{2}:\d{2}$")
             if pat.match(ddl):
