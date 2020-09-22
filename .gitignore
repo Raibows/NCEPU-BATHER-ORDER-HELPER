@@ -4,3 +4,4 @@ venv/
 config.py
 *.pyc
 *.sh
+test.*

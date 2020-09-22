@@ -183,9 +183,10 @@ class Api():
             res = res.json()
             if res['returncode'] == 'SUCCESS':
                 log(f'cancel orderno {ordered_number[i]}  {ordered_time[i]} successfully')
-                return True
-            log(f'cancel orderno {ordered_number[i]}  {ordered_time[i]} failed')
-            return False
+            else:
+                log(f'cancel orderno {ordered_number[i]}  {ordered_time[i]} failed')
+                return False
+        return True
 
     def wechat_push(self, content):
         if self.wx_id == None:
@@ -211,7 +212,6 @@ class Api():
 class OrderBather():
     def __init__(self, api:Api):
         self.base_time = timedelta(hours=14, minutes=30)
-        self.available_order_list = []
         self.api = api
         self.session = api.session
         self.ready_bath = None
@@ -219,12 +219,16 @@ class OrderBather():
         self.priority = 999
         self.init_candidate_time()
 
-    def init_candidate_time(self):
+
+
+    def get_ordered_bath_in_expected_day(self):
+        """
+        return ready_bath, priority
+        """
+        assert len(self.candidates) > 0
         day = self.api.get_expected_year_month_day()
-        for one in self.api.expected_time:
-            self.candidates.append(day.replace(hour=int(one[:2]), minute=int(one[3:])))
-        log(f'init candidates successfully {self.api.expected_day} {self.api.expected_time}')
         _, ordered_time = self.api.ordered_bath_list()
+        temp = None
         for one in ordered_time:
             if one.find(self.api.expected_day) != -1:
                 temp = {'timeslot': one[11:]}
@@ -233,20 +237,29 @@ class OrderBather():
                 start = start[0]
                 temp['end'] = day.replace(hour=int(end[:2]), minute=int(end[3:]))
                 temp['start'] = day.replace(hour=int(start[:2]), minute=int(start[3:]))
-                self.ready_bath = temp
                 break
-
-        if self.ready_bath:
+        if temp:
             for i, x in enumerate(self.candidates):
-                if x >= self.ready_bath['start'] and x < self.ready_bath['end']:
-                    self.priority = i
-                    break
-            log(f"have queried ordered bath {self.api.expected_day} {self.ready_bath['timeslot']}")
+                if x >= temp['start'] and x < temp['end']:
+                    return temp, i
+            return temp, 999
+        return None, 999
 
-    def flush_available_order_list(self):
-        self.available_order_list:list = self.api.available_order_list()
-        self.available_order_list = list(filter(lambda x: x['msg'] > 0  and x['choise'] != '0',
-                                           self.available_order_list))
+    def init_candidate_time(self):
+        day = self.api.get_expected_year_month_day()
+        for one in self.api.expected_time:
+            self.candidates.append(day.replace(hour=int(one[:2]), minute=int(one[3:])))
+        log(f'init candidates successfully {self.api.expected_day} {self.api.expected_time}')
+        self.ready_bath, self.priority = self.get_ordered_bath_in_expected_day()
+        if self.ready_bath:
+            log(f"have queried ordered bath {self.api.expected_day} {self.ready_bath['timeslot']} 理想度 {self.priority}")
+
+    def get_available_order_list(self, expected_time:datetime):
+        available_list = self.api.available_order_list()
+        available_list = list(filter(lambda x: x['msg'] > 0 and x['choise'] != '0' and
+                                               expected_time >= x['start'] and expected_time < x['end'],
+                                     available_list))
+        return available_list
 
     def start_order(self, ddl:datetime):
         log(f"开始帮您预约洗澡直到{get_time(ddl)}, 预约日期为{self.api.expected_day}, "
@@ -257,9 +270,12 @@ class OrderBather():
         try_time = 0
         while True:
             try_time += 1
+            if try_time % 30 == 0:
+                time.sleep(random.uniform(1.0, 10.0))
+            if try_time % 150 == 0:
+                time.sleep(random.uniform(10.0, 30.0))
             log(f'正在帮您尝试第 {try_time} 次  '
-                f"当前预约结果为 {self.api.expected_day} {self.ready_bath['timeslot'] if self.ready_bath else None} ")
-            time.sleep(random.uniform(1.0, 5.0))
+                f"当前预约结果为 {self.api.expected_day} {self.ready_bath['timeslot'] if self.ready_bath else None} 理想度 {self.priority}")
             now = datetime.now()
             if self.priority == 0:
                 break
@@ -267,25 +283,30 @@ class OrderBather():
                 break
             if self.ready_bath and now > (self.ready_bath['end'] - timedelta(minutes=20.0)):
                 break
-            self.flush_available_order_list()
             for pr, cc in enumerate(self.candidates):
                 if self.priority < pr: continue
-                available = list(filter(lambda x: cc >= x['start'] and cc < x['end'], self.available_order_list))
+                time.sleep(random.uniform(1.0, 5.0))
+                available = self.get_available_order_list(cc)
                 if len(available) > 0:
                     if self.ready_bath:
                         temp = set()
                         temp.add(f"{self.api.expected_day} {self.ready_bath['timeslot']}")
                         if not self.api.cancel_order(cancel_set=temp):
+                            time.sleep(3)
+                            self.ready_bath, self.priority = self.get_ordered_bath_in_expected_day()
                             continue
                         self.priority = 999
+                        self.ready_bath = None
                     if not self.api.order_bath(available[0]['id']):
+                        time.sleep(3)
+                        self.ready_bath, self.priority = self.get_ordered_bath_in_expected_day()
                         continue
                     self.ready_bath = available[0]
                     self.priority = pr
 
         if self.ready_bath:
-            log(f"have orderd bath {self.api.expected_day} {self.ready_bath['timeslot']}")
-            self.api.wechat_push(f"账号 {self.api.account} 成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']}")
+            log(f"have orderd bath {self.api.expected_day} {self.ready_bath['timeslot']} 理想度 {self.priority}")
+            self.api.wechat_push(f"账号 {self.api.account} 成功预约洗澡 {self.api.expected_day} {self.ready_bath['timeslot']} 理想度 {self.priority}")
         else:
             log(f"sorry have not ordered any time {self.api.expected_day} {self.api.expected_time}")
             self.api.wechat_push(f"账号 {self.api.account} 预约失败，脚本已自动结束，未能帮您在 {self.api.expected_day} {self.api.expected_time} 成功预约")
